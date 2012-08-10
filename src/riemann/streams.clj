@@ -366,6 +366,26 @@
                     (let [diff (/ (- m (:metric prev-event)) dt)]
                   (call-rescue (assoc event :metric diff) args))))))))))))
 
+(defn sum
+  "Take the sum of every event over interval seconds."
+  [interval & children]
+  (part-time-fast interval
+      (fn [] {:sum (ref 0)
+              :state (ref nil)})
+      (fn [r event] (dosync
+                      (ref-set (:state r) event)
+                      (when-let [m (:metric event)]
+                        (alter (:sum r) + m))))
+      (fn [r start end]
+        (when-let [event
+              (dosync
+                (when-let [state (deref (:state r))]
+                  (let [sum (deref (r :sum))]
+                    (merge state
+                           {:metric sum :time (round end)}))))]
+          (call-rescue event children)))))
+
+
 (defn rate
   "Take the sum of every event over interval seconds and divide by the interval
   size."
@@ -378,13 +398,49 @@
                       (when-let [m (:metric event)]
                         (alter (:count r) + m))))
       (fn [r start end]
-        (when-let [event 
+        (when-let [event
               (dosync
                 (when-let [state (deref (:state r))]
                   (let [count (deref (r :count))
                         rate (/ count interval)]
-                    (merge state 
+                    (merge state
                            {:metric rate :time (round end)}))))]
+          (call-rescue event children)))))
+
+(defn min
+  "Take the minimum of all events over interval seconds."
+  [interval & children]
+  (part-time-fast interval
+      (fn [] {:min (ref 0)
+              :state (ref nil)})
+      (fn [r event] (dosync
+                      (ref-set (:state r) event)
+                      (when-let [m (:metric event)]
+                        (alter r clojure.core/min m))))
+      (fn [r start end]
+        (when-let [event
+              (dosync
+                (when-let [state (deref (:state r))]
+                  (let [m (:min @r)]
+                    (assoc state :metric m))))]
+          (call-rescue event children)))))
+
+(defn max
+  "Take the maximum of all events over interval seconds."
+  [interval & children]
+  (part-time-fast interval
+      (fn [] {:max (ref 0)
+              :state (ref nil)})
+      (fn [r event] (dosync
+                      (ref-set (:state r) event)
+                      (when-let [m (:metric event)]
+                        (alter r max m))))
+      (fn [r start end]
+        (when-let [event
+              (dosync
+                (when-let [state (deref (:state r))]
+                  (let [m (:max @r)]
+                    (assoc state :metric m))))]
           (call-rescue event children)))))
 
 (defn percentiles

@@ -1,5 +1,5 @@
 (ns riemann.test.streams
-  (:use [riemann.streams])
+  (:use [riemann.streams :exclude [min max sum]])
   (:use [riemann.common])
   (:use [riemann.folds :as folds])
   (:require [riemann.index :as index])
@@ -635,6 +635,16 @@
            (doseq [state states] (s state))
            (doseq [state states] (d state))
            (is (= (vec (seq i)) []))))
+
+(deftest streams-min-test
+         (test-stream (riemann.streams/min 5)
+                      (em 1 100 0 1 1)
+                      (em 0)))
+
+(deftest streams-max-test
+         (test-stream (riemann.streams/max 5)
+                      (em 1 100 0 1 1)
+                      (em 100)))
 
 (deftest ewma-timeless-test
          (test-stream (ewma-timeless 0)
