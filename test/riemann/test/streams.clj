@@ -637,14 +637,14 @@
            (is (= (vec (seq i)) []))))
 
 (deftest streams-min-test
-         (test-stream (riemann.streams/min 5)
-                      (em 1 100 0 1 1)
-                      (em 0)))
+         (test-stream-intervals (riemann.streams/min 1)
+                                [{:metric 1} 0.1 {:metric 0} 0.2 {:metric 1} 1.0 {:metric 100}]
+                                (em 0)))
 
 (deftest streams-max-test
-         (test-stream (riemann.streams/max 5)
-                      (em 1 100 0 1 1)
-                      (em 100)))
+         (test-stream-intervals (riemann.streams/max 1)
+                                [{:metric 1} 0.1 {:metric 0} 0.2 {:metric 1} 1.0 {:metric 100}]
+                                (em 1)))
 
 (deftest ewma-timeless-test
          (test-stream (ewma-timeless 0)

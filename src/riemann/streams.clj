@@ -379,8 +379,8 @@
       (fn [r start end]
         (when-let [event
               (dosync
-                (when-let [state (deref (:state r))]
-                  (let [sum (deref (r :sum))]
+                (when-let [state (:state @r)]
+                  (let [sum (:sum @r)]
                     (merge state
                            {:metric sum :time (round end)}))))]
           (call-rescue event children)))))
@@ -415,8 +415,8 @@
               :state (ref nil)})
       (fn [r event] (dosync
                       (ref-set (:state r) event)
-                      (when-let [m (:metric event)]
-                        (alter r clojure.core/min m))))
+                      (when-let [e (:metric event)]
+                        (alter (:min r) min e))))
       (fn [r start end]
         (when-let [event
               (dosync
@@ -433,12 +433,12 @@
               :state (ref nil)})
       (fn [r event] (dosync
                       (ref-set (:state r) event)
-                      (when-let [m (:metric event)]
-                        (alter r max m))))
+                      (when-let [e (:metric event)]
+                        (alter (:max r) max e))))
       (fn [r start end]
         (when-let [event
               (dosync
-                (when-let [state (deref (:state r))]
+                (when-let [state (:state @r)]
                   (let [m (:max @r)]
                     (assoc state :metric m))))]
           (call-rescue event children)))))
