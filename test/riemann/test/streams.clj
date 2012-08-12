@@ -638,13 +638,13 @@
 
 (deftest streams-min-test
          (test-stream-intervals (riemann.streams/min 1)
-                                [{:metric 1} 0.1 {:metric 0} 0.2 {:metric 1} 1.0 {:metric 100}]
-                                (em 0)))
+                                [{:metric 1} 0.1 {:metric 0} 0.2 {:metric 1} 1.0 {:metric 100} 1.0]
+                                (em 0 100)))
 
 (deftest streams-max-test
          (test-stream-intervals (riemann.streams/max 1)
-                                [{:metric 1} 0.1 {:metric 0} 0.2 {:metric 1} 1.0 {:metric 100}]
-                                (em 1)))
+                                [{:metric 1} 0.1 {:metric 0} 0.2 {:metric 1} 1.0 {:metric 100} 1.0]
+                                (em 1 100)))
 
 (deftest ewma-timeless-test
          (test-stream (ewma-timeless 0)

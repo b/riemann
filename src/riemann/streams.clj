@@ -411,37 +411,33 @@
   "Take the minimum of all events over interval seconds."
   [interval & children]
   (part-time-fast interval
-      (fn [] {:min (ref 0)
-              :state (ref nil)})
-      (fn [r event] (dosync
-                      (ref-set (:state r) event)
-                      (when-let [e (:metric event)]
-                        (alter (:min r) min e))))
+      (fn [] (atom nil))
+      (fn [r event] (if-let [metric (:metric event)]
+                      (swap! r (fn [least]
+                                 (if-not least
+                                   event
+                                   (if (<= metric (:metric least))
+                                     event
+                                     least))))))
       (fn [r start end]
-        (when-let [event
-              (dosync
-                (when-let [state (deref (:state r))]
-                  (let [m (:min @r)]
-                    (assoc state :metric m))))]
-          (call-rescue event children)))))
+        (if-let [least @r]
+          (call-rescue least children)))))
 
 (defn max
   "Take the maximum of all events over interval seconds."
   [interval & children]
   (part-time-fast interval
-      (fn [] {:max (ref 0)
-              :state (ref nil)})
-      (fn [r event] (dosync
-                      (ref-set (:state r) event)
-                      (when-let [e (:metric event)]
-                        (alter (:max r) max e))))
+      (fn [] (atom nil))
+      (fn [r event] (if-let [metric (:metric event)]
+                      (swap! r (fn [most]
+                                 (if-not most
+                                   event
+                                   (if (>= metric (:metric most))
+                                     event
+                                     most))))))
       (fn [r start end]
-        (when-let [event
-              (dosync
-                (when-let [state (:state @r)]
-                  (let [m (:max @r)]
-                    (assoc state :metric m))))]
-          (call-rescue event children)))))
+        (if-let [most @r]
+          (call-rescue most children)))))
 
 (defn percentiles
   "Over each period of interval seconds, aggregates events and selects one
