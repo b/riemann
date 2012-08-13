@@ -636,6 +636,11 @@
            (doseq [state states] (d state))
            (is (= (vec (seq i)) []))))
 
+(deftest streams-sum-test
+         (test-stream-intervals (riemann.streams/sum 1)
+                                [{:metric 1} 0.1 {:metric 0} 0.2 {:metric 1} 1.0 {:metric 100} 1.0]
+                                (em 2 100)))
+
 (deftest streams-min-test
          (test-stream-intervals (riemann.streams/min 1)
                                 [{:metric 1} 0.1 {:metric 0} 0.2 {:metric 1} 1.0 {:metric 100} 1.0]

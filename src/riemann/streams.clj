@@ -367,22 +367,22 @@
                   (call-rescue (assoc event :metric diff) args))))))))))))
 
 (defn sum
-  "Take the sum of every event over interval seconds."
+  "Take the sum of all events over interval seconds."
   [interval & children]
   (part-time-fast interval
-      (fn [] {:sum (ref 0)
+      (fn [] {:total (ref 0)
               :state (ref nil)})
       (fn [r event] (dosync
                       (ref-set (:state r) event)
                       (when-let [m (:metric event)]
-                        (alter (:sum r) + m))))
+                        (alter (:total r) + m))))
       (fn [r start end]
         (when-let [event
               (dosync
-                (when-let [state (:state @r)]
-                  (let [sum (:sum @r)]
+                (when-let [state (deref (:state r))]
+                  (let [total (deref (r :total))]
                     (merge state
-                           {:metric sum :time (round end)}))))]
+                           {:metric total}))))]
           (call-rescue event children)))))
 
 
