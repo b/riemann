@@ -651,13 +651,8 @@
                                 [{:metric 1} 0.1 {:metric 0} 0.2 {:metric 1} 1.0 {:metric 100} 1.0]
                                 (em 1 100)))
 
-(deftest streams-stddev-test
-         (test-stream-intervals (riemann.streams/stddev 1)
-                                [{:metric 2} 0.1 {:metric 4} 0.2 {:metric 2} 0.3 {:metric 4} 1.0 {:metric 100} 0.1 {:metric 100} 1.0]
-                                (em 1.1547005383792515 0.0)))
-
-(deftest streams-incant-test
-         (test-stream-intervals (riemann.streams/incant 1 (ref (fn [x] (incanter.stats/sd x))))
+(deftest streams-fold-interval-test
+         (test-stream-intervals (riemann.streams/fold-interval 1 :metric incanter.stats/sd)
                                 [{:metric 2} 0.1 {:metric 4} 0.2 {:metric 2} 0.3 {:metric 4} 1.0 {:metric 100} 0.1 {:metric 100} 1.0]
                                 (em 1.1547005383792515 0.0)))
 

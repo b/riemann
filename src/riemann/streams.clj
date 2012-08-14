@@ -440,32 +440,18 @@
         (if-let [most @r]
           (call-rescue most children)))))
 
-(defn stddev
-  "Standard deviation of all events over interval seconds."
-  [interval & children]
+(defn fold-interval
+  [interval event-key folder & children]
   (part-time-fast interval
       (fn [] (ref []))
       (fn [r event]
         (dosync
-          (if-let [metric (:metric event)]
-            (alter r conj metric))))
+          (if-let [ek (event-key event)]
+            (alter r conj ek))))
       (fn [r start end]
         (let [stat (dosync
-                    (stats/sd @r))]
-          (call-rescue {:metric stat} children)))))
-
-(defn incant
-  [interval incanter-fun & children]
-  (part-time-fast interval
-      (fn [] (ref []))
-      (fn [r event]
-        (dosync
-          (if-let [metric (:metric event)]
-            (alter r conj metric))))
-      (fn [r start end]
-        (let [stat (dosync
-                    (incanter-fun @r))]
-          (call-rescue {:metric stat} children)))))
+                    (folder @r))]
+          (call-rescue {event-key stat} children)))))
 
 (defn percentiles
   "Over each period of interval seconds, aggregates events and selects one
