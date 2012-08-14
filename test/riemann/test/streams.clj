@@ -651,6 +651,11 @@
                                 [{:metric 1} 0.1 {:metric 0} 0.2 {:metric 1} 1.0 {:metric 100} 1.0]
                                 (em 1 100)))
 
+(deftest streams-stddev-test
+         (test-stream-intervals (riemann.streams/stddev 1)
+                                [{:metric 2} 0.1 {:metric 4} 0.2 {:metric 2} 0.3 {:metric 4} 1.0 {:metric 100} 0.1 {:metric 100} 1.0]
+                                (em 1.1547005383792515 0.0)))
+
 (deftest ewma-timeless-test
          (test-stream (ewma-timeless 0)
                       (em 1 10 20 -100 4)

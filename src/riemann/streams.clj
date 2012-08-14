@@ -17,6 +17,7 @@
   (:require riemann.client)
   (:require riemann.logging) 
   (:require [clojure.set])
+  (:require [incanter.stats :as stats])
   (:use [clojure.math.numeric-tower])
   (:use [clojure.tools.logging]))
 
@@ -438,6 +439,20 @@
       (fn [r start end]
         (if-let [most @r]
           (call-rescue most children)))))
+
+(defn stddev
+  "Standard deviation of all events over interval seconds."
+  [interval & children]
+  (part-time-fast interval
+      (fn [] (ref []))
+      (fn [r event]
+        (dosync
+          (if-let [metric (:metric event)]
+            (alter r conj metric))))
+      (fn [r start end]
+        (let [sd (dosync
+                    (stats/sd (deref r)))]
+          (call-rescue {:metric sd} children)))))
 
 (defn percentiles
   "Over each period of interval seconds, aggregates events and selects one
