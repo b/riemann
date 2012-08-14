@@ -384,6 +384,25 @@
                     (let [diff (/ (- m (:metric prev-event)) dt)]
                   (call-rescue (assoc event :metric diff) args))))))))))))
 
+(defn sum
+  "Take the sum of all events over interval seconds."
+  [interval & children]
+  (part-time-fast interval
+      (fn [] {:total (ref 0)
+              :state (ref nil)})
+      (fn [r event] (dosync
+                      (ref-set (:state r) event)
+                      (when-let [m (:metric event)]
+                        (alter (:total r) + m))))
+      (fn [r start end]
+        (when-let [event
+              (dosync
+                (when-let [state (deref (:state r))]
+                  (let [total (deref (r :total))]
+                    (merge state
+                           {:metric total}))))]
+          (call-rescue event children)))))
+
 (defn rate
   "Take the sum of every event over interval seconds and divide by the interval
   size."
@@ -404,6 +423,38 @@
                     (merge state 
                            {:metric rate :time (round end)}))))]
           (call-rescue event children)))))
+
+(defn min
+  "Take the minimum of all events over interval seconds."
+  [interval & children]
+  (part-time-fast interval
+      (fn [] (atom nil))
+      (fn [r event] (if-let [metric (:metric event)]
+                      (swap! r (fn [least]
+                                 (if-not least
+                                   event
+                                   (if (<= metric (:metric least))
+                                     event
+                                     least))))))
+      (fn [r start end]
+        (if-let [least @r]
+          (call-rescue least children)))))
+
+(defn max
+  "Take the maximum of all events over interval seconds."
+  [interval & children]
+  (part-time-fast interval
+      (fn [] (atom nil))
+      (fn [r event] (if-let [metric (:metric event)]
+                      (swap! r (fn [most]
+                                 (if-not most
+                                   event
+                                   (if (>= metric (:metric most))
+                                     event
+                                     most))))))
+      (fn [r start end]
+        (if-let [most @r]
+          (call-rescue most children)))))
 
 (defn percentiles
   "Over each period of interval seconds, aggregates events and selects one
