@@ -450,9 +450,22 @@
           (if-let [metric (:metric event)]
             (alter r conj metric))))
       (fn [r start end]
-        (let [sd (dosync
-                    (stats/sd (deref r)))]
-          (call-rescue {:metric sd} children)))))
+        (let [stat (dosync
+                    (stats/sd @r))]
+          (call-rescue {:metric stat} children)))))
+
+(defn incant
+  [interval incanter-fun & children]
+  (part-time-fast interval
+      (fn [] (ref []))
+      (fn [r event]
+        (dosync
+          (if-let [metric (:metric event)]
+            (alter r conj metric))))
+      (fn [r start end]
+        (let [stat (dosync
+                    (incanter-fun @r))]
+          (call-rescue {:metric stat} children)))))
 
 (defn percentiles
   "Over each period of interval seconds, aggregates events and selects one
