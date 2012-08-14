@@ -17,7 +17,6 @@
   (:require riemann.client)
   (:require riemann.logging) 
   (:require [clojure.set])
-  (:require [incanter.stats :as stats])
   (:use [clojure.math.numeric-tower])
   (:use [clojure.tools.logging]))
 
